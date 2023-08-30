@@ -1,10 +1,9 @@
 import datetime
 import pytz
+import os
 import configparser
 from Foundation import NSDateFormatter
 from CalendarStore import CalCalendarStore, EKEventStore
-
-
 
 
 def get_calendar_events(config):
@@ -18,7 +17,6 @@ def get_calendar_events(config):
         14 * 24 * 60 * 60
     )
     # Construct a predicate to fetch events within the range
-    # Assume store is an instance of EKEventStore
     store = EKEventStore.alloc().init()
     calendars_array = [calendar for calendar in store.calendars() if str(calendar.title()) in calendars]
     predicate = store.predicateForEventsWithStartDate_endDate_calendars_(start_date, end_date, calendars_array)
@@ -85,7 +83,9 @@ def print_org_format(events):
 
 
 if __name__ == "__main__":
+    script_directory = os.path.dirname(os.path.abspath(__file__))
+
     config = configparser.ConfigParser()
-    config.read_file(open('config.cfg'))
+    config.read_file(open(os.path.join(script_directory, 'config.cfg')))
     events = get_calendar_events(config)
     print_org_format(events)
