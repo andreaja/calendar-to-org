@@ -1,1 +1,45 @@
 A script to export events from Calendar.app to an org-mode file
+
+
+To run regularly:
+
+Create a .plist file (e.g., com.yourname.scriptname.plist) in the ~/Library/LaunchAgents/ directory.
+
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.yourname.scriptname</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/python3</string>
+        <string>/path/to/your/script.py</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>YOUR_ENV_VARIABLE_NAME</key>
+        <string>YourValue</string>
+    </dict>
+
+    <key>StartInterval</key>
+    <integer>60</integer> <!-- This is the time interval in seconds -->
+
+    <key>StandardErrorPath</key>
+    <string>/path/to/your/logfile.log</string>
+
+    <key>StandardOutPath</key>
+    <string>/path/to/your/logfile.log</string>
+
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+
+$ launchctl load ~/Library/LaunchAgents/com.yourname.scriptname.plist
+
+
+
+
