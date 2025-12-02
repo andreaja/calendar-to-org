@@ -12,7 +12,7 @@ VIRTUALENV_DIR="$DIR/.venv"
 source "$VIRTUALENV_DIR/bin/activate"
 
 # Execute the Python script (assuming it's in the same directory as this script)
-python "$DIR/cal-to-org.py" > "${ORG_CALENDAR_FILE}"
+python3 "$DIR/cal-to-org.py" > "${ORG_CALENDAR_FILE}"
 
 # Deactivate the virtual environment (optional, since the script ends anyway)
 deactivate
