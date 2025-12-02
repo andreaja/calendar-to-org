@@ -1,2 +1,4 @@
 config.cfg
 *.log
+.venv
+com.andreasjacobsen.cal-to-org.plist
