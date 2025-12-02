@@ -1,5 +1,7 @@
 #!/opt/homebrew/bin/bash
 
+echo "$(date +'%Y-%m-%d %H:%M:%S') start"
+
 # Detect the directory of this script
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -15,3 +17,4 @@ python "$DIR/cal-to-org.py" > "${ORG_CALENDAR_FILE}"
 # Deactivate the virtual environment (optional, since the script ends anyway)
 deactivate
 
+echo "$(date +'%Y-%m-%d %H:%M:%S') end"
