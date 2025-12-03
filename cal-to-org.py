@@ -6,15 +6,40 @@ from Foundation import NSDateFormatter
 from CalendarStore import CalCalendarStore, EKEventStore
 
 
+# Room detection block with Norwegian support
+room_keywords = [
+    "møterom",
+    "moterom",
+    "møterom ",       # prefix
+    "rom ",
+    " møterom",       # suffix
+    "kontor",         # some orgs mislabel rooms as offices
+    " møteroms",      # plural inflection
+    "lcd",
+    "video",
+    "av",
+    "vc",
+]
+
+def looks_like_room(name, email):
+    n = name.lower() if name else ""
+    e = email.lower() if email else ""
+
+    # Norwegian patterns
+    if any(x in n for x in room_keywords):
+        return True
+    if any(x in e for x in room_keywords):
+        return True
+
+    return False
+
 
 def get_one_on_one_partner(event, self_email=None):
     attendees = event.attendees()
     if not attendees:
         return None
 
-    # Normalize self email once
     self_email = self_email.lower() if self_email else None
-
     humans = []
 
     for a in attendees:
@@ -27,35 +52,18 @@ def get_one_on_one_partner(event, self_email=None):
             email = str(a.URL().resourceSpecifier()).lower() if a.URL() else None
         except:
             email = None
-
+        #print(f"{name} / {email}")
         # Exclude yourself
         if self_email and email and self_email == email:
             continue
 
-        # Exclude rooms: heuristic
-        role = None
-        try:
-            role = a.participantRole()
-        except:
-            pass
-
-        # Role filtering: 3 is often "room" or "non-person" in EventKit
-        if role == 3:
-            continue
-
-        # Fallback: if email or name looks like a resource
-        if email and any(x in email for x in ["resource", "room", "conf", "meeting"]):
-            continue
-        if name and name.lower() in ["room", "meeting room"]:
+        # Exclude rooms
+        if looks_like_room(name, email):
             continue
 
         humans.append(name or email)
 
-    # Accept only if exactly one human remains
-    if len(humans) == 1:
-        return humans[0]
-
-    return None
+    return humans[0] if len(humans) == 1 else None
 
 
 def get_calendar_events(config):
