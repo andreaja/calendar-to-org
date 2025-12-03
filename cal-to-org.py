@@ -6,6 +6,58 @@ from Foundation import NSDateFormatter
 from CalendarStore import CalCalendarStore, EKEventStore
 
 
+
+def get_one_on_one_partner(event, self_email=None):
+    attendees = event.attendees()
+    if not attendees:
+        return None
+
+    # Normalize self email once
+    self_email = self_email.lower() if self_email else None
+
+    humans = []
+
+    for a in attendees:
+        try:
+            name = a.name()
+        except:
+            name = None
+
+        try:
+            email = str(a.URL().resourceSpecifier()).lower() if a.URL() else None
+        except:
+            email = None
+
+        # Exclude yourself
+        if self_email and email and self_email == email:
+            continue
+
+        # Exclude rooms: heuristic
+        role = None
+        try:
+            role = a.participantRole()
+        except:
+            pass
+
+        # Role filtering: 3 is often "room" or "non-person" in EventKit
+        if role == 3:
+            continue
+
+        # Fallback: if email or name looks like a resource
+        if email and any(x in email for x in ["resource", "room", "conf", "meeting"]):
+            continue
+        if name and name.lower() in ["room", "meeting room"]:
+            continue
+
+        humans.append(name or email)
+
+    # Accept only if exactly one human remains
+    if len(humans) == 1:
+        return humans[0]
+
+    return None
+
+
 def get_calendar_events(config):
     store = CalCalendarStore.defaultCalendarStore()
     calendars = [config['Main']['calendar']]
@@ -45,7 +97,8 @@ def format_orgmode_time(dateObj):
 
 # Helper function to write an orgmode entry
 # Adapted from ews-orgmode
-def print_orgmode_entry(subject, start, end, location, response):
+def print_orgmode_entry(subject, start, end, location, response, partner=None):
+
   startDate = start;
   endDate = end;
   # Check if the appointment starts and ends on the same day and use proper formatting
@@ -61,10 +114,14 @@ def print_orgmode_entry(subject, start, end, location, response):
     else:
       print("* " + subject)
 
-  if location is not None:
+  if location is not None or partner is not None:
     print(":PROPERTIES:")
-    print(":LOCATION: " + location)
     print(":RESPONSE: " + response)
+    if partner:
+        print(":ONE_ON_ONE_WITH: " + partner)
+
+    if location is not None:
+        print(":LOCATION: " + location)
     print(":END:")
 
   print("")
@@ -72,13 +129,17 @@ def print_orgmode_entry(subject, start, end, location, response):
 def nsdate_to_local_date(d):
     return datetime.datetime.strptime(str(d),'%Y-%m-%d %H:%M:%S %z').astimezone(pytz.timezone('Europe/Vienna'))
 
-def print_org_format(events):
+def print_org_format(events, config):
+    my_email = config['Main']['my_email']
     for event in events:
+        partner = get_one_on_one_partner(event, my_email)
+
         print_orgmode_entry(event.title(),
                             nsdate_to_local_date(event.startDate()),
                             nsdate_to_local_date(event.endDate()),
                             event.location(),
-                            get_availability_string(event.availability())
+                            get_availability_string(event.availability()),
+                            partner
                             )
 
 
@@ -88,4 +149,4 @@ if __name__ == "__main__":
     config = configparser.ConfigParser()
     config.read_file(open(os.path.join(script_directory, 'config.cfg')))
     events = get_calendar_events(config)
-    print_org_format(events)
+    print_org_format(events, config)
